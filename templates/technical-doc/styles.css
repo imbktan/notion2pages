@@ -1,0 +1,139 @@
+.logo {
+    padding: 0px 20px 0px 5px !important;
+}
+
+.navbar-item img {
+    max-height: 35px !important;
+}
+
+.markdown-body {
+    box-sizing: border-box;
+    min-width: 200px;
+    max-width: 980px;
+    margin: 0 auto;
+    border-left: 1px solid #f0f0f0;
+    padding-left: 20px;
+}
+
+@media (max-width: 767px) {
+    .markdown-body {
+        padding: 15px;
+    }
+}
+
+.menu-list a{
+    margin: 2px;
+    padding: 2px 10px;
+}
+
+.menu-list{
+    border-left: 2px solid #f3f3f3;
+    margin: 0px 0px 0px 5px!important;
+}
+
+.menu-list li ul {
+    border-left: 1px solid #f8f8f8;
+}
+
+.menu-item{
+    padding: 0px!important;
+    margin: 0px!important;
+    font-size: 14px;
+}
+
+
+.menu-group{
+    padding-top: 2px;
+    margin-left: 10px;
+}
+
+/** **/
+.menu-group .menu-item{
+    display: none;
+}
+
+.menu-group .menu-item.is-active, .menu-group.is-active .menu-item{
+    display: block!important;
+}
+/** **/
+.menu-group>.menu-group-title>.collapse{
+    display: none;
+}
+
+.menu-group>.menu-group-title>.expand{
+    display: inline-block;
+}
+
+.menu-group.is-active>.menu-group-title>.collapse{
+    display: inline-block;
+}
+
+.menu-group.is-active>.menu-group-title>.expand{
+    display: none;
+}
+/** **/
+
+.menu {
+    position: sticky;
+    display: inline-block;
+    vertical-align: top;
+    max-height: 100vh;
+    overflow-y: auto;
+    top: 0;
+    bottom: 0;
+}
+
+
+.header-bar {
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.table-of-contents {
+    border-left: 1px solid #f0f0f0;
+    padding-left: 10px;
+}
+
+
+
+.table-of-contents li {
+    padding-top: 3px;
+    border-top: 1px solid #f3f3f3;
+
+}
+
+.table-of-contents a:hover {
+    color: darkblue;
+}
+
+
+
+.table-of-contents a:hover {
+    color: darkblue;
+}
+
+.table-of-contents .h1 {
+    margin-left: 0;
+    font-size: 12px;
+}
+
+.table-of-contents .h2 {
+    margin-left: 10px;
+    font-size: 12px;
+}
+
+.table-of-contents .h3 {
+    margin-left: 20px;
+    font-size: 12px;
+}
+
+.table-of-contents .h4 {
+    margin-left: 30px;
+}
+
+.table-of-contents .h5 {
+    margin-left: 40px;
+}
+
+.table-of-contents .h6 {
+    margin-left: 50px;
+}
