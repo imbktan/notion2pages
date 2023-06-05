@@ -1,7 +1,7 @@
 # Notion2Pages
 Build technical documentation from Notion pages
 
-Sample: https://support.carftmypdf.com
+Sample: https://support.craftmypdf.com
 
 ## How to build 
 - Step 1: Clone the repo
