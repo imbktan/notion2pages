@@ -56,6 +56,11 @@
     display: block!important;
 }
 /** **/
+.menu-group>.menu-group-title{
+    text-transform: uppercase;
+    font-size: 12px!important;
+}
+
 .menu-group>.menu-group-title>.collapse{
     display: none;
 }

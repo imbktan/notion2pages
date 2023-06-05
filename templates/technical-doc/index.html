@@ -36,8 +36,11 @@
 				</div>
 
 				<div class="navbar-end">
-					<div class="navbar-item">
-						<button class="button" onclick="showSearchDialog(this)">Search</button>
+					<div class="navbar-item is-size-7">
+						<button class="button is-small" onclick="showSearchDialog(this)">
+							<i class="fa fa-search pr-4 is-size-7" aria-hidden="true"></i> 
+							<span class="is-size-7 pr-3 has-text-grey-light ">Search (Ctrl-K or ⌘-K)</span>
+						</button>
 					</div>
 				</div>
 			</div>
@@ -52,30 +55,33 @@
 				<aside class="pt-3 menu root-menu">
 
 					{% macro render_page(page) %}
-					<div class="menu-group">
-						{% if page.type=='database' %}
-						<div class="menu-group-title is-size-7 has-text-weight-medium">
-							<i class="fa fa-plus-circle expand" aria-hidden="true"></i>
-							<i class="fa fa-minus-circle collapse" aria-hidden="true"></i>
-							{{ page.title }}
-						</div>
-						{% endif %}
+						{% if page.type=='page' or (page.type=='database' and page.valid_pages>0) %}
+						
+							<div class="menu-group">
+								{% if page.type=='database' %}
+								<div class="menu-group-title is-size-7 has-text-weight-medium">
+									<i class="fa fa-plus-circle expand" aria-hidden="true"></i>
+									<i class="fa fa-minus-circle collapse" aria-hidden="true"></i>
+									{{ page.title }}
+								</div>
+								{% endif %}
 
-						<ul class="is-small pl-1 menu-list">
-							{% for subpage in page.pages %}
-							<li class="menu-item {{'is-active' if subpage.slug==slug else '' }}">
-								{% if subpage.slug %}
-								<a class="{{'is-active' if subpage.slug==slug else '' }}"
-									href="{{ subpage.slug }}.html">{{subpage.title }}
-								</a>
-								{% endif %}
-								{% if subpage.pages.length>0 %}
-								{{ render_page(subpage) }}
-								{% endif %}
-							</li>
-							{% endfor %}
-						</ul>
-					</div>
+								<ul class="is-small pl-1 menu-list">
+									{% for subpage in page.pages %}
+									<li class="menu-item {{'is-active' if subpage.slug==slug else '' }}">
+										{% if subpage.slug %}
+										<a class="{{'is-active' if subpage.slug==slug else '' }}"
+											href="{{ subpage.slug }}.html">{{subpage.title }}
+										</a>
+										{% endif %}
+										{% if subpage.pages.length>0 %}
+										{{ render_page(subpage) }}
+										{% endif %}
+									</li>
+									{% endfor %}
+								</ul>
+							</div>
+						{% endif %}
 					{% endmacro %}
 
 
@@ -112,12 +118,11 @@
 		<div class="modal-background"></div>
 		<div class="modal-card">
 			<header class="modal-card-head">
-				<p class="modal-card-title">Modal title</p>
+				<p class="modal-card-title">Search</p>
 				<button class="delete" aria-label="close" onclick="hideSearchDialog()"></button>
 			</header>
 			<section class="modal-card-body">
-				<input id="txtSearch" class="input" type="text" placeholder="Text input" oninput="search()"
-					onchange="search()">
+				<input id="txtSearch" class="input" type="text" placeholder="Text input" oninput="search()">
 				<nav class="panel" style="overflow-y: scroll;max-height:500px;" id="searchResults">
 				</nav>
 			</section>

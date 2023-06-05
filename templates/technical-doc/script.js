@@ -10,7 +10,22 @@ function hideSearchDialog() {
 
 function showSearchDialog() {
     searchDialog.classList.add('is-active');
+    txtSearch.focus();
+    search();
 }
+
+window.addEventListener('keydown', function(event) {
+    if (event.key === 'Escape' || event.keyCode === 27) {
+        hideSearchDialog();
+    }
+
+    const isMac = window.navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+    const ctrlKey = isMac ? event.metaKey : event.ctrlKey;
+    if (ctrlKey && event.keyCode == 75) {
+        event.preventDefault();
+        showSearchDialog();
+    }
+});
 
 function sortPagesByTokens(searchString, pageArray) {
     // Split the searchString into tokens
@@ -28,6 +43,10 @@ function sortPagesByTokens(searchString, pageArray) {
         for (let token of searchTokens) {
             score += titleTokens.filter(titleToken => titleToken === token).length;
             score += keywordTokens.filter(keywordToken => keywordToken === token).length;
+            if(token.length>=3){
+                score += titleTokens.filter(titleToken => titleToken.indexOf(token)>=0).length;
+                score += keywordTokens.filter(keywordToken => keywordToken.indexOf(token)>=0).length;
+            }
         }
         return score;
     }
@@ -52,15 +71,15 @@ function search() {
     pages.forEach((page) => {
         var item = document.createElement('div');
         item.innerHTML =
-            `<a class="panel-block is-active" url="${page.page}">
+            `<a class="panel-block is-active" data-url="${page.page}">
 						<div class="content">
 							${page.title}
 							<div  class="has-text-grey">${page.title}</div>
 						</div>					
 			</a>`;
         item.querySelector('a').onclick = function () {
-            console.log(this.dataset);
-            //goto(this.dataset.page);
+            //console.log(this.dataset);
+            goto(this.dataset.url);
         };
         item.focus();
         searchResults.appendChild(item.querySelector('a'));

@@ -81,14 +81,18 @@ const buildPagesFromDatabase = async (database_obj, page) => {
         let title = getValue(r, "Name", "");
         let slug = getValue(r, "slug", "") || getValue(r, "Slug", "") || convertToSlug(title);
         let is_published = true;
+        let in_menu = true;
 
         if (getValue(r, "is_published", "true") === "false") {
             is_published = false;
         }
         
+        if (getValue(r, "in_menu", "true") === "false") {
+            in_menu = false;
+        }
         
         if (is_published) {
-            console.log(`Exporting ${slug} ...`);
+            console.log(`Exporting ${slug} ${in_menu} ...`);
             let ret = await exportPageBlockToHTML(r.id)
             let content = ret.content;
             let new_page = {
@@ -97,12 +101,14 @@ const buildPagesFromDatabase = async (database_obj, page) => {
                 title: title,
                 slug: slug,
                 content: content,
+                in_menu: in_menu,
                 pages: []
             }
             new_database_page.pages.push(new_page)
             await findDatabaseInPage(r.id, new_page);
         }
     }
+    new_database_page.valid_pages = new_database_page.pages.filter((e)=>e.in_menu==true).length>0;
 }
 
 const findDatabaseInPage = async (page_id, page) => {
