@@ -8,7 +8,7 @@ Inspired by the [developer guide of Notion](https://developers.notion.com/docs) 
 ![kb-preview.png](kb-preview.png)
 
 ## How to build 
-- Step 1: Duplicate the Notion page: [here](https://pepper-leopard-8d1.notion.site/Knowledge-Base-Sample-65a826c2c17a4bb7aafe673719571cd8?pvs=4)
+- Step 1: Duplicate the Notion page: [here](https://pepper-leopard-8d1.notion.site/Knowledge-base-Sample-9a0288fa141440a2a90d62199734634b?pvs=4)
  
 - Step 2: Clone the GitHub repo
   ```

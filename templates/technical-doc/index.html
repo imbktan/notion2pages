@@ -8,6 +8,8 @@
 	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
 	<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
 	<link rel="stylesheet" href="styles.css">
+	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700" rel="stylesheet">
+	<link href="https://fonts.googleapis.com/css2?family=Roboto+Mono" rel="stylesheet">	
 </head>
 
 <body>
@@ -60,8 +62,8 @@
 							<div class="menu-group">
 								{% if page.type=='database' %}
 								<div class="menu-group-title is-size-7 has-text-weight-medium">
-									<i class="fa fa-plus-circle expand" aria-hidden="true"></i>
-									<i class="fa fa-minus-circle collapse" aria-hidden="true"></i>
+									<i class="fa fa-plus-square expand pr-1" aria-hidden="true"></i>
+									<i class="fa fa-minus-square collapse pr-1" aria-hidden="true"></i>
 									{{ page.title }}
 								</div>
 								{% endif %}
@@ -103,7 +105,7 @@
 				</article>
 			</div>
 			<div class="column is-one-fifth pt-8">
-				<div class="is-size-7 has-text-weight-medium pt-3 pl-2">
+				<div class="table-of-contents-title">
 					<i class="fa fa-sitemap" aria-hidden="true"></i>
 					<span class="pl-2">TABLE OF CONTENTS</span>
 				</div>

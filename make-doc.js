@@ -51,7 +51,9 @@ const downloadFile = (url, destinationPath) => {
 const getValue = (r, name, defaultValue) => {
     try {
         let p = r.properties[name];
-        if (p.type == 'select') {
+        if (p.type == 'checkbox') {
+            return p[p.type];
+        }else if (p.type == 'select') {
             let val = p[p.type].name;
             return val;
         } else {
@@ -63,7 +65,6 @@ const getValue = (r, name, defaultValue) => {
         //console.log(ex);
         return defaultValue;
     }
-
 }
 
 const buildPagesFromDatabase = async (database_obj, page) => {
@@ -83,16 +84,16 @@ const buildPagesFromDatabase = async (database_obj, page) => {
         let is_published = true;
         let in_menu = true;
 
-        if (getValue(r, "is_published", "true") === "false") {
+        if (getValue(r, "is_published", true) === false) {
             is_published = false;
         }
         
-        if (getValue(r, "in_menu", "true") === "false") {
+        if (getValue(r, "in_menu", true) === false) {
             in_menu = false;
         }
         
         if (is_published) {
-            console.log(`Exporting ${slug} ${in_menu} ...`);
+            console.log(`Exporting ${slug} ...`);
             let ret = await exportPageBlockToHTML(r.id)
             let content = ret.content;
             let new_page = {

@@ -1,3 +1,27 @@
+body{
+    font-family: inter;
+    font-weight: 300;
+}
+
+h1{
+  padding-top: 20px;
+  padding-bottom: 20px;
+}
+
+h2{
+    padding-top: 30px;
+    padding-bottom: 10px;
+  }
+  
+
+hr {
+    background-color: #ebebeb;
+    border: none;
+    display: block;
+    height: 1px;
+    margin: 1.5rem 0;
+}
+
 .logo {
     padding: 0px 20px 0px 5px !important;
 }
@@ -56,9 +80,15 @@
     display: block!important;
 }
 /** **/
+.menu-group-title{
+    cursor: pointer;
+}
+
 .menu-group>.menu-group-title{
     text-transform: uppercase;
     font-size: 12px!important;
+    font-weight: 600!important;
+    color: #4f5a66;
 }
 
 .menu-group>.menu-group-title>.collapse{
@@ -93,11 +123,22 @@
     border-bottom: 1px solid #f0f0f0;
 }
 
+.table-of-contents-title{
+    padding-top: 10px;
+    padding-left: 10px;
+    font-weight: 600;
+    font-size: 13px;
+}
+
 .table-of-contents {
     border-left: 1px solid #f0f0f0;
     padding-left: 10px;
+    padding-top: 10px;
 }
 
+.table-of-contents a{
+    color: #637288;;
+}
 
 
 .table-of-contents li {
@@ -118,17 +159,20 @@
 
 .table-of-contents .h1 {
     margin-left: 0;
-    font-size: 12px;
+    font-size: 13px;
+    font-weight: 500!important;
 }
 
 .table-of-contents .h2 {
     margin-left: 10px;
-    font-size: 12px;
+    font-size: 13px;
+    font-weight: 500!important;
 }
 
 .table-of-contents .h3 {
     margin-left: 20px;
     font-size: 12px;
+    font-weight: 400!important;
 }
 
 .table-of-contents .h4 {
