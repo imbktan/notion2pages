@@ -1,6 +1,6 @@
 const { Client } = require("@notionhq/client");
-const { NotionToMarkdown } = require("notion-to-md");
-var showdown = require('showdown');
+const {convertNotionBlocksToHTML} = require('./notion-to-html');
+
 const fs = require('fs');
 const nunjucks = require('nunjucks');
 const jsdom = require("jsdom");
@@ -22,14 +22,7 @@ const convertToSlug = (str) =>{
 
 const exportPageBlockToHTML = async (block_id) => {
     const { results } = await notion.blocks.children.list({ block_id, });
-    //convert to markdown
-    const mdblocks = await n2m.blocksToMarkdown(results.filter((e) => e.type != 'child_database'));
-    const mdString = n2m.toMarkdownString(mdblocks);
-
-    var converter = new showdown.Converter({ tables: true, completeHTMLDocument: false });
-
-    let text = mdString.parent;
-    let content = converter.makeHtml(text);
+   let content = await convertNotionBlocksToHTML(results, notion);
 
     return {
         content: content
@@ -68,7 +61,17 @@ const getValue = (r, name, defaultValue) => {
 }
 
 const buildPagesFromDatabase = async (database_obj, page) => {
-    const resp = await notion.databases.query({ database_id: database_obj.id, });
+
+    const resp = await notion.databases.query({
+        database_id: database_obj.id,
+        sorts: [
+          {
+            property: 'order',
+            direction: 'ascending',
+          },
+        ],
+      });
+
     console.log(`Section: ${database_obj.child_database.title}`)
     let new_database_page = {
         id: database_obj.id,
@@ -202,7 +205,6 @@ const notion = new Client({
     auth: Settings.apiKey,
 });
 
-const n2m = new NotionToMarkdown({ notionClient: notion });
 
 (async () => {
     nunjucks.configure({ autoescape: true });

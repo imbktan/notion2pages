@@ -11,8 +11,6 @@
   "dependencies": {
     "@notionhq/client": "^2.2.5",
     "jsdom": "^22.1.0",
-    "notion-to-md": "^3.0.1",
-    "nunjucks": "^3.2.4",
-    "showdown": "^2.1.0"
+    "nunjucks": "^3.2.4"
   }
 }

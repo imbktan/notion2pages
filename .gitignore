@@ -2,3 +2,8 @@ test/
 node_modules/
 build/
 settings-prod.js
+settings-test.js
+build-test.sh
+test.js
+test.json
+test.html
