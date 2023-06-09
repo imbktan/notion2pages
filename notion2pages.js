@@ -198,7 +198,7 @@ const preprocessContent = async (page) => {
     page.processedContent = dom.serialize();
 }
 
-const processPage = async (page) => {
+const processPage = async (page, parent) => {
 
     if (page.type == 'page') {
         await preprocessContent(page);
@@ -220,13 +220,16 @@ const processPage = async (page) => {
         pageKeywords.push({
             page: pageFileName,
             title: page.title,
-            keywords: page.keywords
+            keywords: page.keywords,
+            order: page.order,
+            parentOrder: parent==null?0:parent.order,
+            in_menu: page.in_menu
         })
     }
     let pagesToBeProcessed = [];
     for (let p = 0; p < page.pages.length; p++) {
         let cpage = page.pages[p];
-        pagesToBeProcessed.push(processPage(cpage))
+        pagesToBeProcessed.push(processPage(cpage, page))
     }
     await Promise.all(pagesToBeProcessed);
 }
@@ -245,10 +248,13 @@ const notion = new Client({
     console.log('Processing Notion blocks ...');
     nunjucks.configure({ autoescape: true });
     rootPage = await findDatabaseInPage(Settings.pageID, null)
-    await processPage(rootPage)
+    await processPage(rootPage,null)
 
     console.log('Processing script.js');
-    let rendered_script = nunjucks.render(Settings.templateScript, { pageKeywords: JSON.stringify(pageKeywords) });
+    pageKeywords.sort(function(a,b){
+        return (a.parentOrder*10000+a.order) - (b.parentOrder*10000+b.order);
+    });
+    let rendered_script = nunjucks.render(Settings.templateScript, { pageKeywords: JSON.stringify(pageKeywords.filter((e)=>e.in_menu==true)) });
     await fs.promises.writeFile(`./${Settings.buildDirectory}/script.js`, rendered_script);
 
 

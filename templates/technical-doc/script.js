@@ -74,7 +74,7 @@ function search() {
             `<a class="panel-block is-active" data-url="${page.page}">
 						<div class="content">
 							${page.title}
-							<div  class="has-text-grey">${page.title}</div>
+							<!--div  class="has-text-grey">${page.keywords}</div-->
 						</div>					
 			</a>`;
         item.querySelector('a').onclick = function () {
