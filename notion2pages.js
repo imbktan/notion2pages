@@ -10,6 +10,9 @@ const path = require('path');
 const url = require('url');
 const { Settings } = require(process.argv[2]);
 
+const axios = require('axios');
+const { pipeline } = require('stream/promises');
+
 
 const convertToSlug = (str) =>{
     str = str.replace(/^\s+|\s+$/g, ''); // Trim leading/trailing white spaces
@@ -20,25 +23,30 @@ const convertToSlug = (str) =>{
     return str;
 }
 
-const exportPageBlockToHTML = async (block_id) => {
-    const { results } = await notion.blocks.children.list({ block_id, });
-   let content = await convertNotionBlocksToHTML(results, notion);
-
-    return {
-        content: content
+const exportPageBlockToHTML = async (block) => {
+    for(let i=0;i<3;i++){//retry
+        try{
+            let block_id = block.id;
+            const { results } = await notion.blocks.children.list({ block_id, });
+            let content = await convertNotionBlocksToHTML(results, notion);
+        
+            return {
+                content: content,
+                block: block
+            }
+        }catch(ex){
+            console.log(ex);
+        }
     }
 }
 
-const downloadFile = (url, destinationPath) => {
-    https.get(url, (response) => {
-        const fileStream = fs.createWriteStream(destinationPath);
-        response.pipe(fileStream);
-        fileStream.on('finish', () => {
-            fileStream.close();
-        });
-    }).on('error', (err) => {
-        console.error(`Error downloading image: ${url} `, err.message);
-    });
+const downloadFile = async (url, destinationPath) => {
+    try {
+        const response = await axios.get(url, { responseType: 'stream' });
+        await pipeline(response.data, fs.createWriteStream(destinationPath));
+    } catch (error) {
+        console.error(`Error downloading image: ${url} `, error.message);
+    }
 };
 
 const getValue = (r, name, defaultValue) => {
@@ -60,7 +68,7 @@ const getValue = (r, name, defaultValue) => {
     }
 }
 
-const buildPagesFromDatabase = async (database_obj, page) => {
+const buildPagesFromDatabase = async (database_obj, page, order) => {
 
     const resp = await notion.databases.query({
         database_id: database_obj.id,
@@ -77,41 +85,58 @@ const buildPagesFromDatabase = async (database_obj, page) => {
         id: database_obj.id,
         type: 'database',
         title: database_obj.child_database.title,
-        pages: []
+        pages: [],
+        order: order
     }
     page.pages.push(new_database_page);
+
+    let blocksToProcessed = [];
+
     for (let i = 0; i < resp.results.length; i++) {
         let r = resp.results[i];
-        let title = getValue(r, "Name", "");
-        let slug = getValue(r, "slug", "") || getValue(r, "Slug", "") || convertToSlug(title);
         let is_published = true;
-        let in_menu = true;
-
         if (getValue(r, "is_published", true) === false) {
             is_published = false;
         }
         
-        if (getValue(r, "in_menu", true) === false) {
-            in_menu = false;
-        }
-        
         if (is_published) {
+            let slug = getValue(r, "slug", "") || getValue(r, "Slug", "") || convertToSlug(title);   
             console.log(`Exporting ${slug} ...`);
-            let ret = await exportPageBlockToHTML(r.id)
-            let content = ret.content;
-            let new_page = {
-                id: r.id,
-                type: 'page',
-                title: title,
-                slug: slug,
-                content: content,
-                in_menu: in_menu,
-                pages: []
-            }
-            new_database_page.pages.push(new_page)
-            await findDatabaseInPage(r.id, new_page);
+            blocksToProcessed.push(exportPageBlockToHTML(r));           
         }
     }
+
+    let rets = await Promise.all(blocksToProcessed);
+    console.log('Done exporting notion blocks');
+    for(let r=0;r<rets.length;r++){
+        let ret = rets[r];
+        let content = ret.content;
+        let in_menu = true;
+        let order = 1000;
+
+        let title = getValue(ret.block, "Name", "");
+        let slug = getValue(ret.block, "slug", "") || getValue(r, "Slug", "") || convertToSlug(title); 
+        if (getValue(ret.block, "in_menu", true) === false) {
+            in_menu = false;
+        }
+
+        order = 1000+ parseInt(getValue(ret.block, "sort", 0));
+
+        let new_page = {
+            id: ret.block_id,
+            type: 'page',
+            title: title,
+            slug: slug,
+            content: content,
+            in_menu: in_menu,
+            pages: [],
+            order: order
+        }
+        new_database_page.pages.push(new_page)
+        await findDatabaseInPage(ret.block.id, new_page);
+    };
+
+
     new_database_page.valid_pages = new_database_page.pages.filter((e)=>e.in_menu==true).length>0;
 }
 
@@ -124,19 +149,24 @@ const findDatabaseInPage = async (page_id, page) => {
         };
     }
     const response = await notion.blocks.children.list({ block_id: page_id, });
-
+    let dbs = [];
     for (let d = 0; d < response.results.length; d++) {
         let db = response.results[d];
         if (db.type == 'child_database') {
-            await buildPagesFromDatabase(db, page);
+            dbs.push(buildPagesFromDatabase(db, page,d));
         }
     }
+    let rets = await Promise.all(dbs);
+    page.pages.sort(function(a,b){
+        return a.order - b.order;
+    });
     return page;
 }
 
 const preprocessContent = async (page) => {
     const dom = new JSDOM(page.content);
     if (Settings.downloadImages) {
+        let imagesToBeProcessed = [];
         let imgs = dom.window.document.querySelectorAll("img");
         for (let ig = 0; ig < imgs.length; ig++) {
             let img = imgs[ig];
@@ -148,10 +178,12 @@ const preprocessContent = async (page) => {
             let np = `${Settings.buildDirectory}/images/${id}-${filename}`;
             let nurl = `images/${id}-${filename}`;
             img.src = nurl;
-            downloadFile(img_url, './' + np);
+            imagesToBeProcessed.push(downloadFile(img_url, './' + np));
             console.log(`Exporting image: ./${np} ...`);
         }
+        await Promise.all(imagesToBeProcessed);
     }
+
 
     let headings = dom.window.document.querySelectorAll("h1,h2,h3,h4,h5,h6");
     let headingsText = null;
@@ -175,14 +207,14 @@ const processPage = async (page) => {
             html: page.processedContent,
             title: page.title,
             slug: page.slug,
-            root_page: root_page, //
+            rootPage: rootPage, //
             links: Settings.links,
             iconURL: Settings.iconURL,
             websiteURL: Settings.websiteURL
-
         });
 
         let pageFileName = `${page.slug}.html`;
+        pages.push(pageFileName);
         console.log(`Writing page ${pageFileName} ...`)
         await fs.promises.writeFile(`./${Settings.buildDirectory}/${pageFileName}`, rendered);
         pageKeywords.push({
@@ -191,15 +223,18 @@ const processPage = async (page) => {
             keywords: page.keywords
         })
     }
+    let pagesToBeProcessed = [];
     for (let p = 0; p < page.pages.length; p++) {
         let cpage = page.pages[p];
-        await processPage(cpage);
+        pagesToBeProcessed.push(processPage(cpage))
     }
+    await Promise.all(pagesToBeProcessed);
 }
 
 
 let pageKeywords = [];
-let root_page = null;
+let rootPage = null;
+let pages = [];
 
 const notion = new Client({
     auth: Settings.apiKey,
@@ -207,11 +242,27 @@ const notion = new Client({
 
 
 (async () => {
+    console.log('Processing Notion blocks ...');
     nunjucks.configure({ autoescape: true });
-    root_page = await findDatabaseInPage(Settings.pageID, null)
-    await processPage(root_page)
+    rootPage = await findDatabaseInPage(Settings.pageID, null)
+    await processPage(rootPage)
 
+    console.log('Processing script.js');
     let rendered_script = nunjucks.render(Settings.templateScript, { pageKeywords: JSON.stringify(pageKeywords) });
     await fs.promises.writeFile(`./${Settings.buildDirectory}/script.js`, rendered_script);
+
+
+    console.log('Processing sitemap.xml');
+    const now = new Date();
+    const last_modified = now.toISOString();
+    let rendered_sitemap = nunjucks.render(Settings.templateSiteMap, { 
+        pages: pages.map((e)=>{
+            return {
+                url: Settings.sitemapBaseURL+"/"+ e,
+                last_modified: last_modified
+            }
+        })
+    });
+    await fs.promises.writeFile(`./${Settings.buildDirectory}/sitemap.xml`, rendered_sitemap);
 
 })();

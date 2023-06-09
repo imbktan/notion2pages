@@ -10,6 +10,7 @@
   "license": "ISC",
   "dependencies": {
     "@notionhq/client": "^2.2.5",
+    "axios": "^1.4.0",
     "jsdom": "^22.1.0",
     "nunjucks": "^3.2.4"
   }
