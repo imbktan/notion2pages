@@ -13,6 +13,11 @@ const { Settings } = require(process.argv[2]);
 const axios = require('axios');
 const { pipeline } = require('stream/promises');
 
+function sleep(ms) {
+    return new Promise((resolve) => {
+      setTimeout(resolve, ms);
+    });
+}
 
 const convertToSlug = (str) =>{
     str = str.replace(/^\s+|\s+$/g, ''); // Trim leading/trailing white spaces
@@ -23,13 +28,24 @@ const convertToSlug = (str) =>{
     return str;
 }
 
-const exportPageBlockToHTML = async (block) => {
+const savePageJSON =async(block, slug, results)=>{
+    if(Settings.ouputPageJSON===true){
+        let jsonPath = `./${Settings.buildDirectory}/json`
+        if (!fs.existsSync(jsonPath)) {
+            fs.mkdirSync(jsonPath);
+        } 
+        let content = JSON.stringify(results,null,2);
+        await fs.promises.writeFile(`${jsonPath}/${block.id}-${slug}.json`, content);
+    }
+}
+
+const exportPageBlockToHTML = async (block, slug) => {
     for(let i=0;i<3;i++){//retry
         try{
             let block_id = block.id;
             const { results } = await notion.blocks.children.list({ block_id, });
             let content = await convertNotionBlocksToHTML(results, notion);
-        
+            await savePageJSON(block, slug, results);
             return {
                 content: content,
                 block: block
@@ -37,6 +53,7 @@ const exportPageBlockToHTML = async (block) => {
         }catch(ex){
             console.log(ex);
         }
+        await sleep(1000);
     }
 }
 
@@ -80,87 +97,97 @@ const buildPagesFromDatabase = async (database_obj, page, order) => {
         ],
       });
 
-    console.log(`Section: ${database_obj.child_database.title}`)
-    let new_database_page = {
-        id: database_obj.id,
-        type: 'database',
-        title: database_obj.child_database.title,
-        pages: [],
-        order: order
-    }
-    page.pages.push(new_database_page);
+    
+    if(database_obj.child_database.title.indexOf("section::")==0){
+        const title = database_obj.child_database.title.split("section::")[1].trim();
 
-    let blocksToProcessed = [];
-
-    for (let i = 0; i < resp.results.length; i++) {
-        let r = resp.results[i];
-        let is_published = true;
-        if (getValue(r, "is_published", true) === false) {
-            is_published = false;
-        }
-        
-        if (is_published) {
-            let slug = getValue(r, "slug", "") || getValue(r, "Slug", "") || convertToSlug(title);   
-            console.log(`Exporting ${slug} ...`);
-            blocksToProcessed.push(exportPageBlockToHTML(r));           
-        }
-    }
-
-    let rets = await Promise.all(blocksToProcessed);
-    console.log('Done exporting notion blocks');
-    for(let r=0;r<rets.length;r++){
-        let ret = rets[r];
-        let content = ret.content;
-        let in_menu = true;
-        let order = 1000;
-
-        let title = getValue(ret.block, "Name", "");
-        let slug = getValue(ret.block, "slug", "") || getValue(r, "Slug", "") || convertToSlug(title); 
-        if (getValue(ret.block, "in_menu", true) === false) {
-            in_menu = false;
-        }
-
-        order = 1000+ parseInt(getValue(ret.block, "sort", 0));
-
-        let new_page = {
-            id: ret.block_id,
-            type: 'page',
+        console.log(`Section: ${title}`)
+        let new_database_page = {
+            id: database_obj.id,
+            type: 'database',
             title: title,
-            slug: slug,
-            content: content,
-            in_menu: in_menu,
             pages: [],
             order: order
         }
-        new_database_page.pages.push(new_page)
-        await findDatabaseInPage(ret.block.id, new_page);
-    };
+        page.pages.push(new_database_page);
 
+        let blocksToProcessed = [];
 
-    new_database_page.valid_pages = new_database_page.pages.filter((e)=>e.in_menu==true).length>0;
+        for (let i = 0; i < resp.results.length; i++) {
+            let r = resp.results[i];
+            let is_published = true;
+            if (getValue(r, "is_published", true) === false) {
+                is_published = false;
+            }
+            
+            if (is_published) {
+                let slug = getValue(r, "slug", "") || getValue(r, "Slug", "") || convertToSlug(title);   
+                console.log(`Exporting ${slug} ...`);
+                blocksToProcessed.push(exportPageBlockToHTML(r,slug));           
+            }
+        }
+
+        let rets = await Promise.all(blocksToProcessed);
+        console.log(`Done exporting notion blocks: ${title}`);
+        for(let r=0;r<rets.length;r++){
+            let ret = rets[r];
+            let content = ret.content;
+            let in_menu = true;
+            let order = 1000;
+
+            let title = getValue(ret.block, "Name", "");
+            let slug = getValue(ret.block, "slug", "") || getValue(r, "Slug", "") || convertToSlug(title); 
+            if (getValue(ret.block, "in_menu", true) === false) {
+                in_menu = false;
+            }
+
+            order = 1000+ parseInt(getValue(ret.block, "sort", 0));
+
+            let new_page = {
+                id: ret.block_id,
+                type: 'page',
+                title: title,
+                slug: slug,
+                content: content,
+                in_menu: in_menu,
+                pages: [],
+                order: order
+            }
+            new_database_page.pages.push(new_page)
+            await findDatabaseInPage(ret.block.id, new_page);
+        };
+
+    }
 }
 
 const findDatabaseInPage = async (page_id, page) => {
-    if (page == null) {
-        page = {
-            id: page_id,
-            type: 'root',
-            pages: []
-        };
-    }
-    const response = await notion.blocks.children.list({ block_id: page_id, });
-    let dbs = [];
-    for (let d = 0; d < response.results.length; d++) {
-        let db = response.results[d];
-        if (db.type == 'child_database') {
-            dbs.push(buildPagesFromDatabase(db, page,d));
+    for(let i=0;i<3;i++){
+        try{
+            if (page == null) {
+                page = {
+                    id: page_id,
+                    type: 'root',
+                    pages: []
+                };
+            }
+            const response = await notion.blocks.children.list({ block_id: page_id, });
+            let dbs = [];
+            for (let d = 0; d < response.results.length; d++) {
+                let db = response.results[d];
+                if (db.type == 'child_database') {
+                    dbs.push(buildPagesFromDatabase(db, page,d));
+                }
+            }
+            let rets = await Promise.all(dbs);
+            page.pages.sort(function(a,b){
+                return a.order - b.order;
+            });
+            return page;
+        }catch(ex){
+            console.log(ex);
         }
+        await sleep(1000);
     }
-    let rets = await Promise.all(dbs);
-    page.pages.sort(function(a,b){
-        return a.order - b.order;
-    });
-    return page;
 }
 
 const preprocessContent = async (page) => {
@@ -196,6 +223,19 @@ const preprocessContent = async (page) => {
 
     page.keywords = headingsText;
     page.processedContent = dom.serialize();
+    page.excerpt = getExcerpt(dom);
+
+}
+
+const getExcerpt = (dom)=>{
+    let ps = dom.window.document.querySelectorAll("p");
+    let content = "";
+
+    for(let i=0;i<ps.length && i<3;i++){
+        content+=ps[i].textContent;
+    }
+
+    return content.substring(0,500);
 }
 
 const processPage = async (page, parent) => {
@@ -223,7 +263,8 @@ const processPage = async (page, parent) => {
             keywords: page.keywords,
             order: page.order,
             parentOrder: parent==null?0:parent.order,
-            in_menu: page.in_menu
+            in_menu: page.in_menu,
+            excerpt: page.excerpt
         })
     }
     let pagesToBeProcessed = [];

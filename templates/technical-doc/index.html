@@ -10,9 +10,18 @@
 	<link rel="stylesheet" href="styles.css">
 	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700" rel="stylesheet">
 	<link href="https://fonts.googleapis.com/css2?family=Roboto+Mono" rel="stylesheet">	
+
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/default.min.css">
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
+
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@200;300;400&display=swap" rel="stylesheet">
+
 </head>
 
 <body>
+	<div id="loading" class="loading-text">Loading...</div>
 	<div class="container has-background-white-ter header-bar">
 		<nav class="navbar" role="navigation" aria-label="main navigation">
 			<div class="navbar-brand">
@@ -53,14 +62,14 @@
 
 
 		<div class="columns">
-			<div class="column is-one-fifth pt-8">
+			<div class="column is-one-fifth pt-8 pl-0 pr-0">
 				<aside class="pt-3 menu root-menu">
 
 					{% macro render_page(page) %}
-						{% if page.type=='page' or (page.type=='database' and page.valid_pages>0) %}
+						{% if page.type=='page' or (page.type=='database' and page.title!='system') %}
 						
 							<div class="menu-group">
-								{% if page.type=='database' %}
+								{% if page.type=='database' and page.title!="" %}
 								<div class="menu-group-title is-size-7 has-text-weight-medium">
 									<i class="fa fa-plus-square expand pr-1" aria-hidden="true"></i>
 									<i class="fa fa-minus-square collapse pr-1" aria-hidden="true"></i>
@@ -68,18 +77,22 @@
 								</div>
 								{% endif %}
 
-								<ul class="is-small pl-1 menu-list">
+								<ul class="is-small menu-list pl-0">
 									{% for subpage in page.pages %}
-									<li class="menu-item {{'is-active' if subpage.slug==slug else '' }}">
-										{% if subpage.slug %}
-										<a class="{{'is-active' if subpage.slug==slug else '' }}"
-											href="{{ subpage.slug }}.html">{{subpage.title }}
-										</a>
-										{% endif %}
-										{% if subpage.pages.length>0 %}
-										{{ render_page(subpage) }}
-										{% endif %}
-									</li>
+										<li class="menu-item {{'is-active' if subpage.slug==slug else '' }}">
+											{% if subpage.slug and subpage.in_menu %}
+												{% if subpage.title=='' or subpage.slug=='ignore'  %}
+												<!-- ignore this -->
+												{% else %}
+												<a class="{{'is-active' if subpage.slug==slug else '' }}"
+													href="{{ subpage.slug }}.html">{{subpage.title }}
+												</a>
+												{% endif %}
+											{% endif %}
+											{% if subpage.pages.length>0 %}
+												{{ render_page(subpage) }}
+											{% endif %}
+										</li>
 									{% endfor %}
 								</ul>
 							</div>

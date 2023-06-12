@@ -37,7 +37,7 @@ function sortPagesByTokens(searchString, pageArray) {
 
         // Split the title and keywords into tokens
         const titleTokens = page.title.toLowerCase().split(/\s+/);
-        const keywordTokens = (page.keywords || "").toLowerCase().split('|').join(' ').split(/\s+/);
+        const keywordTokens = ((page.keywords || " ")+" "+( page.excerpt|| " ")).toLowerCase().split('|').join(' ').split(/\s+/);
 
         // For each searchToken, increase score for each occurrence in title and keywords
         for (let token of searchTokens) {
@@ -57,24 +57,39 @@ function sortPagesByTokens(searchString, pageArray) {
     return pageArray.filter((p) => p.score > 0);
 }
 
-
-function search() {
-    //console.log(txtSearch.value);
-
-    let pages = sortPagesByTokens(txtSearch.value, pageArray);
-    //console.log(pages);
+function clearSearch(){
     let searchResults = document.querySelector("#searchResults");
 
     while (searchResults.firstChild) {
         searchResults.removeChild(searchResults.lastChild);
     }
+}
+
+function search() {
+    let searchResults = document.querySelector("#searchResults");
+    let seachKeywords = txtSearch.value;
+    if(seachKeywords=='') {
+        clearSearch();
+        searchResults.innerHTML=
+        `<a class="panel-block">
+            <div class="content">
+                <div  class="has-text-grey search-item is-size-7 pt-1 pb-2">No results were found</div>
+            </div>					
+        </a>`;
+        return;
+    }
+
+    let pages = sortPagesByTokens(seachKeywords, pageArray);
+    //console.log(pages);
+
+    clearSearch();
     pages.forEach((page) => {
         var item = document.createElement('div');
         item.innerHTML =
             `<a class="panel-block is-active" data-url="${page.page}">
 						<div class="content">
-							${page.title}
-							<!--div  class="has-text-grey">${page.keywords}</div-->
+                            <div  class="is-size-6 has-text-weight-semibold">${page.title}</div>
+							<div  class="has-text-grey search-item is-size-7 pt-1 pb-2">${page.excerpt}</div>
 						</div>					
 			</a>`;
         item.querySelector('a').onclick = function () {
@@ -163,3 +178,15 @@ document.addEventListener('DOMContentLoaded', (event) => {
         });
     });
 });
+
+document.addEventListener('DOMContentLoaded', (event) => {
+    document.querySelectorAll('.code-block code').forEach((el) => {
+      hljs.highlightElement(el);
+    });
+    document.getElementById('loading').style.display = 'none';
+});
+
+window.addEventListener('beforeunload', function (e) {
+    document.getElementById('loading').style.display = 'block';
+});
+
