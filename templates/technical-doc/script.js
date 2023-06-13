@@ -1,6 +1,66 @@
 
 let pageArray = {{ pageKeywords| safe}}
 
+//////////////////////////////////////// search
+class Document {
+    constructor(page, item) {
+      this.page = page;
+      this.item = item;
+      let text = item.title+" "+item.excerpt;
+
+      this.id = page.page+"#"+item.id;
+      this.tf = {};
+      this.words = text.toLowerCase().split(' ');
+      this.words.forEach(word => {
+        this.tf[word] = (this.tf[word] || 0) + 1;
+      });
+    }
+  
+    partialMatchScore(queryWord) {
+      return this.words.reduce((score, word) => {
+        for (let i = 0; i < word.length; i++) {
+          if (word.startsWith(queryWord, i)) {
+            return score + queryWord.length / word.length;
+          }
+        }
+        return score;
+      }, 0);
+    }
+  }
+  
+  class Corpus {
+    constructor(documents) {
+      this.documents = documents;
+      this.idf = {};
+  
+      const allWords = this.documents.flatMap(doc => Object.keys(doc.tf));
+      const uniqueWords = [...new Set(allWords)];
+  
+      uniqueWords.forEach(word => {
+        const docsWithWord = this.documents.filter(doc => doc.tf[word]);
+        this.idf[word] = Math.log(this.documents.length / docsWithWord.length);
+      });
+    }
+  
+    tfidf(query) {
+      const queryWords = query.toLowerCase().split(' ');
+      const scores = this.documents.map(doc => {
+        let score = 0;
+        queryWords.forEach(word => {
+          const tf = doc.tf[word] || 0;
+          const idf = this.idf[word] || 0;
+          const partialMatchScore = doc.partialMatchScore(word);
+          score += tf * idf + partialMatchScore;
+        });
+        return { id: doc.id, score: score, doc: doc };
+      });
+  
+      // Sort by score in descending order and return IDs and scores
+      return scores.sort((a, b) => b.score - a.score);
+    }
+  }
+  
+/////////////
 let searchDialog = document.querySelector('#searchDialog');
 let txtSearch = document.querySelector('#txtSearch');
 
@@ -28,33 +88,17 @@ window.addEventListener('keydown', function(event) {
 });
 
 function sortPagesByTokens(searchString, pageArray) {
-    // Split the searchString into tokens
-    const searchTokens = searchString.toLowerCase().split(/\s+/);
-
-    // Create a function to calculate the 'score' of a page
-    function calculateScore(page) {
-        let score = 0;
-
-        // Split the title and keywords into tokens
-        const titleTokens = page.title.toLowerCase().split(/\s+/);
-        const keywordTokens = ((page.keywords || " ")+" "+( page.excerpt|| " ")).toLowerCase().split('|').join(' ').split(/\s+/);
-
-        // For each searchToken, increase score for each occurrence in title and keywords
-        for (let token of searchTokens) {
-            score += titleTokens.filter(titleToken => titleToken === token).length;
-            score += keywordTokens.filter(keywordToken => keywordToken === token).length;
-            if(token.length>=3){
-                score += titleTokens.filter(titleToken => titleToken.indexOf(token)>=0).length;
-                score += keywordTokens.filter(keywordToken => keywordToken.indexOf(token)>=0).length;
-            }
-        }
-        return score;
-    }
-    pageArray.forEach((page) => { page.score = calculateScore(page) });
-    // Sort the pages by their score
-    pageArray.sort((page1, page2) => page2.score - page1.score);
-
-    return pageArray.filter((p) => p.score > 0);
+    const documents = [];
+    pageArray.forEach((page)=>{
+        page.excerpts.forEach((excerpt)=>{
+            documents.push(
+            new Document(page,excerpt)
+            )
+        });
+    });
+    
+    const corpus = new Corpus(documents);
+    return corpus.tfidf(searchString);
 }
 
 function clearSearch(){
@@ -79,28 +123,46 @@ function search() {
         return;
     }
 
-    let pages = sortPagesByTokens(seachKeywords, pageArray);
+    let results = sortPagesByTokens(seachKeywords, pageArray);
     //console.log(pages);
 
     clearSearch();
-    pages.forEach((page) => {
-        var item = document.createElement('div');
-        item.innerHTML =
-            `<a class="panel-block is-active" data-url="${page.page}">
+    let filteredResults = results.filter((e)=>e.score>0);
+    filteredResults.forEach((result) => {
+        let doc = result.doc;
+        let page = doc.page;
+        let item = doc.item;
+
+        var wrapper = document.createElement('div');
+        let title = "";
+        let description = "";
+
+        if(item.id){
+            title=`<div  class="is-size-6 has-text-weight-semibold">${page.title}</div>
+            <div  class="is-size-7 has-text-weight-semibold has-text-grey pl-1">Section: ${item.title}</div>
+            `
+            description = item.excerpt;
+        }else{
+            title = `<div  class="is-size-6 has-text-weight-semibold">${item.title}</div>` ;
+            description =item.excerpt;
+        }
+
+        wrapper.innerHTML =
+            `<a class="panel-block is-active" data-url="${result.id}">
 						<div class="content">
-                            <div  class="is-size-6 has-text-weight-semibold">${page.title}</div>
-							<div  class="has-text-grey search-item is-size-7 pt-1 pb-2">${page.excerpt}</div>
+                            <div  class="is-size-6 has-text-weight-semibold">${title}</div>
+							<div  class="has-text-grey search-item is-size-7 pt-1 pb-2">${description}</div>
 						</div>					
 			</a>`;
-        item.querySelector('a').onclick = function () {
+            wrapper.querySelector('a').onclick = function () {
             //console.log(this.dataset);
             goto(this.dataset.url);
         };
-        item.focus();
-        searchResults.appendChild(item.querySelector('a'));
+        wrapper.focus();
+        searchResults.appendChild(wrapper.querySelector('a'));
 
     });
-    if (pages.length == 0) {
+    if (filteredResults.length == 0) {
         ts = `<div  class="has-text-grey pt-5 pb-5 pl-4">No results were found</div>`;
         searchResults.innerHTML = ts;
     }
@@ -110,8 +172,10 @@ function search() {
 }
 
 function goto(url) {
+    hideSearchDialog();
     window.location.href = url;
 }
+
 
 ////////////////////////////////////////
 // Get all the headers in the markdown body

@@ -57,6 +57,7 @@ hr {
     margin: 0 auto;
     border-left: 1px solid #f0f0f0;
     padding-left: 20px;
+    padding-bottom: 150px;
 }
 
 .markdown-body img{
@@ -161,6 +162,7 @@ hr {
     font-size: 12px!important;
     font-weight: 600!important;
     color: #4f5a66;
+    padding-bottom: 5px;
 }
 
 .menu-group>.menu-group-title>.collapse{

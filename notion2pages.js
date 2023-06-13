@@ -190,6 +190,7 @@ const findDatabaseInPage = async (page_id, page) => {
     }
 }
 
+
 const preprocessContent = async (page) => {
     const dom = new JSDOM(page.content);
     if (Settings.downloadImages) {
@@ -223,8 +224,8 @@ const preprocessContent = async (page) => {
 
     page.keywords = headingsText;
     page.processedContent = dom.serialize();
-    page.excerpt = getExcerpt(dom);
-
+    //page.excerpt = getExcerpt(dom);
+    page.excerpts = extractHeadings(page,dom);
 }
 
 const getExcerpt = (dom)=>{
@@ -235,7 +236,34 @@ const getExcerpt = (dom)=>{
         content+=ps[i].textContent;
     }
 
-    return content.substring(0,500);
+    return content.substring(0,300);
+}
+
+let extractHeadings = (page, dom)=>{
+    let headings = dom.window.document.querySelectorAll("h1,h2,h3,h4,h5,h6");
+    let excerpts = [{
+        id: "",
+        tagName: "",
+        title: page.title,
+        excerpt: getExcerpt(dom)
+    }];
+    excerpts.push();
+    headings.forEach((heading) => {
+        let excerpt = '';
+        let current = heading.nextSibling;
+        while(current){
+            if(current.tagName=="P") excerpt+=current.textContent;
+            else if(current.tagName && current.tagName.indexOf("H")==0) break;
+            current = current.nextSibling;
+        }
+        excerpts.push({
+            id: heading.id,
+            tagName: heading.tagName,
+            title: heading.textContent,
+            excerpt: excerpt//.substring(0,150)
+        })
+    });
+    return excerpts;
 }
 
 const processPage = async (page, parent) => {
@@ -264,7 +292,8 @@ const processPage = async (page, parent) => {
             order: page.order,
             parentOrder: parent==null?0:parent.order,
             in_menu: page.in_menu,
-            excerpt: page.excerpt
+            excerpt: page.excerpt,
+            excerpts: page.excerpts
         })
     }
     let pagesToBeProcessed = [];
