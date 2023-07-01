@@ -10,6 +10,7 @@ exports.Settings = {
     "websiteURL": "https://craftmypdf.com",
     "sitemapBaseURL": "https://craftmypdf.com",
     "downloadImages":true,
+    "footer":'<a href="https://craftmypdf.com">CraftMyPDF.com</a> &mdash; Copyright <span id="copyright-year">0000</span>',
     "links": [
         {
             text: "Home",

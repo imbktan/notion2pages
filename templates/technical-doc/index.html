@@ -65,16 +65,24 @@
 			<div class="column is-one-fifth pt-8 pl-0 pr-0">
 				<aside class="pt-3 menu root-menu">
 
-					{% macro render_page(page) %}
+					{% macro render_page(page,level) %}
 						{% if page.type=='page' or (page.type=='database' and page.title!='system') %}
 						
-							<div class="menu-group">
+							<div class="menu-group level-{{level}}">
 								{% if page.type=='database' and page.title!="" %}
-								<div class="menu-group-title is-size-7 has-text-weight-medium">
-									<i class="fa fa-plus-square expand pr-1" aria-hidden="true"></i>
-									<i class="fa fa-minus-square collapse pr-1" aria-hidden="true"></i>
-									{{ page.title }}
-								</div>
+									<div class="menu-group-title is-size-7 has-text-weight-medium">
+									{% if level==0 %}
+									
+										<i class="fa fa-plus-square expand pr-1" aria-hidden="true"></i>
+										<i class="fa fa-minus-square collapse pr-1" aria-hidden="true"></i>
+										{{ page.title }}
+									
+									{% else %}
+										<i class="fa fa-chevron-down pr-1" aria-hidden="true"></i>
+										{{ page.title }}
+									{% endif %}
+									</div>
+
 								{% endif %}
 
 								<ul class="is-small menu-list pl-0">
@@ -90,7 +98,7 @@
 												{% endif %}
 											{% endif %}
 											{% if subpage.pages.length>0 %}
-												{{ render_page(subpage) }}
+												{{ render_page(subpage,level+1) }}
 											{% endif %}
 										</li>
 									{% endfor %}
@@ -103,7 +111,7 @@
 					{% for page in rootPage.pages %}
 					{% if page.pages.length>0 %}
 					<div class="pb-2">
-						{{ render_page(page) }}
+						{{ render_page(page,0) }}
 					</div>
 					{% endif %}
 					{% endfor %}
@@ -118,16 +126,18 @@
 				</article>
 			</div>
 			<div class="column is-one-fifth pt-8">
-				<div class="table-of-contents-title">
-					<i class="fa fa-sitemap" aria-hidden="true"></i>
-					<span class="pl-2">TABLE OF CONTENTS</span>
-				</div>
 				<aside class="menu table-of-contents is-size-7 ">
 
 				</aside>
 			</div>
 		</div>
 	</div>
+
+	<footer class="footer">
+		<div class="content has-text-centered">
+		  {{footer|safe}}
+		</div>
+	</footer>
 
 	<div class="modal" id="searchDialog">
 		<div class="modal-background"></div>

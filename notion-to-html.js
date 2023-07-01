@@ -85,6 +85,9 @@ let convertNotionBlocksToHTML = async(blocks, notion, level = 0 )=>{
                 html+=`<pre class="code-block ${cls}"><code class="language-${block[block.type]['language']}">${value}</code></pre>`;
             }else if(block.type=='divider'){
                 html+=`<hr>`;
+            }else if(block.type=='bookmark'){
+                let url = block[block.type]['url'];
+                html+=`<a href='${url}'><a>`;                
             }else if(block.type=='table' && block.has_children){
                 let tableContent=`<table  class="${cls}">`;
                 tableContent+=await convertChildren(block, notion, level+1);

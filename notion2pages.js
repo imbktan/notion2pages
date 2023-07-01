@@ -43,7 +43,25 @@ const exportPageBlockToHTML = async (block, slug) => {
     for(let i=0;i<3;i++){//retry
         try{
             let block_id = block.id;
-            const { results } = await notion.blocks.children.list({ block_id, });
+            let results = [];
+            let next_cursor = null;
+            while(true){
+                let p={
+                    block_id: block_id,
+                    page_size: 5000
+                }
+                if(next_cursor!=null) p['start_cursor'] = next_cursor;
+                let resp= await notion.blocks.children.list(p);
+                 results = results.concat(resp.results);
+                 if(resp.has_more){
+                    next_cursor = resp.next_cursor;
+                    console.log(`next_cursor: ${next_cursor}`);
+                 }else{
+                    break;
+                 }
+            }
+
+
             let content = await convertNotionBlocksToHTML(results, notion);
             await savePageJSON(block, slug, results);
             return {
@@ -278,7 +296,8 @@ const processPage = async (page, parent) => {
             rootPage: rootPage, //
             links: Settings.links,
             iconURL: Settings.iconURL,
-            websiteURL: Settings.websiteURL
+            websiteURL: Settings.websiteURL,
+            footer: Settings.footer
         });
 
         let pageFileName = `${page.slug}.html`;

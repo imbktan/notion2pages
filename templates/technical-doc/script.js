@@ -182,7 +182,11 @@ function goto(url) {
 var headers = document.querySelectorAll(".markdown-body h1, .markdown-body h2, .markdown-body h3, .markdown-body h4, .markdown-body h5, .markdown-body h6");
 
 var menu = document.querySelector(".table-of-contents");
-
+menu.innerHTML=
+`<div class="table-of-contents-title">
+<i class="fa fa-sitemap" aria-hidden="true"></i>
+<span class="pl-2">TABLE OF CONTENTS</span>
+</div>`;
 // A helper function to create a list item for a heading
 function createListItem(header) {
     var listItem = document.createElement("li");
@@ -215,33 +219,46 @@ for (var i = 0; i < headers.length; i++) {
     var header = headers[i];
     currentList.appendChild(createListItem(header));
 }
+
 ///////////////////////////
 document.addEventListener('DOMContentLoaded', (event) => {
-    const menuGroups = document.querySelectorAll('.menu-group');
+    const menuGroups = document.querySelectorAll('.menu-group.level-0');
     const activeItem = document.querySelector('.menu-item.is-active');
 
     // Collapse all menu groups initially
-    menuGroups.forEach(group => group.classList.remove('is-active'));
+    let resetSelected = ()=>{
+        menuGroups.forEach(group => group.classList.remove('is-active'));
 
-    // If there's an active item, expand its parent groups
-    if (activeItem) {
-        let parent = activeItem.parentElement;
-        while (parent) {
-            if (parent.classList.contains('menu-group')) {
-                parent.classList.add('is-active');
+        // If there's an active item, expand its parent groups
+        if (activeItem) {
+            let parent = activeItem.parentElement;
+            while (parent) {
+                if (parent.classList.contains('menu-group')) {
+                    parent.classList.add('is-active');
+                }
+                parent = parent.parentElement;
             }
-            parent = parent.parentElement;
         }
     }
+    resetSelected();
 
     // Attach event listener to menu group titles for click events
     menuGroups.forEach(group => {
+        
         const title = group.querySelector('.menu-group-title');
         title.addEventListener('click', () => {
-            group.classList.toggle('is-active');
+            let is_active = group.classList.contains('is-active');
+            menuGroups.forEach(group => group.classList.remove('is-active'));
+
+            if(is_active){
+                group.classList.remove('is-active');
+            }else{
+                group.classList.add('is-active');
+            }
         });
     });
 });
+////////////////////////////////
 
 document.addEventListener('DOMContentLoaded', (event) => {
     document.querySelectorAll('.code-block code').forEach((el) => {
@@ -254,3 +271,5 @@ window.addEventListener('beforeunload', function (e) {
     document.getElementById('loading').style.display = 'block';
 });
 
+if(document.getElementById('copyright-year'))
+    document.getElementById('copyright-year').innerText = (new Date()).getFullYear();
