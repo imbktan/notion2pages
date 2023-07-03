@@ -24,15 +24,20 @@ body{
 
 
 h1{
-  padding-top: 20px;
-  padding-bottom: 20px;
+  padding-top: 5px;
+  padding-bottom: 5px;
 }
 
-h2{
-    padding-top: 30px;
+.content h2:first-of-type{
+    padding-top: 5px!important;
     padding-bottom: 10px;
-  }
-  
+    margin-top: 5px!important;
+}
+
+.content h2:not(:first-of-type){
+    padding-top: 30px!important;
+    padding-bottom: 10px;
+}
 
 hr {
     background-color: #ebebeb;
@@ -127,7 +132,7 @@ hr {
 }
 
 .menu-list li ul {
-    border-left: 1px solid #f8f8f8;
+    border-left: 0px solid #f8f8f8;
 }
 
 .menu-item{
