@@ -59,12 +59,23 @@ let convertNotionBlocksToHTML = async(blocks, notion, level = 0 )=>{
                 html+=`<p class="${cls}">${value}${childrenContent}</p>`;
             }else if(block.type=='image'){
                 let url = '';
+                let alt = '';
+                let rt_caption = '';
                 if(block[block.type].type=='external')
                     url = block[block.type]['external']['url'];
                 else if(block[block.type].type=='file')
                     url = block[block.type]['file']['url'];
-
-                html+=`<img src='${url}'  class="${cls}"/>`;
+                
+                let captions = block[block.type]['caption'];
+                if(captions && captions.length>0){
+                    alt = captions.map((e)=>e.plain_text).join("");
+                    rt_caption = richTextToHTML(captions)
+                }
+                
+                html+=`<img src='${url}'  class="${cls}" ${alt!=''?'alt="'+alt+'"':''}/>`;
+                if(rt_caption!=null){
+                    html+=`<div class='image-caption'>${rt_caption}</div>`;
+                }
             }else if(block.type=='bulleted_list_item' || block.type=='numbered_list_item'){
                 let t = 'ul';
                 if(block.type=='numbered_list_item') t='ol';

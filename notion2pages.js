@@ -221,11 +221,22 @@ const preprocessContent = async (page) => {
             const pathname = url.parse(img.src).pathname;
             const parts = pathname.split('/');
             const id = parts[parts.length - 2];
-            let np = `${Settings.buildDirectory}/images/${id}-${filename}`;
-            let nurl = `images/${id}-${filename}`;
-            img.src = nurl;
-            imagesToBeProcessed.push(downloadFile(img_url, './' + np));
-            console.log(`Exporting image: ./${np} ...`);
+
+            let alt = img.getAttribute('alt');
+            let new_image_path = '';
+            let new_url = '';
+            let nfp = `${id}-${filename}`;
+
+            if(alt!=null && alt!=''){
+                nfp = page.slug+"-"+convertToSlug(alt)+path.extname(filename);
+            }
+
+            new_image_path = `${Settings.buildDirectory}/images/${nfp}`;
+            new_url = `images/${nfp}`;
+
+            img.src = new_url;
+            imagesToBeProcessed.push(downloadFile(img_url, './' + new_image_path));
+            console.log(`Exporting image: ./${new_image_path} ...`);
         }
         await Promise.all(imagesToBeProcessed);
     }

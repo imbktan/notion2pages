@@ -281,3 +281,13 @@ hr {
     top: 50px;
     position: absolute;
 }
+
+.image-caption {
+    width: 100%;
+    font-size: 14px;
+    color: #9f9f9f;
+    font-style: italic;
+    text-align: center;
+    padding-bottom: 25px;
+    padding-top: 7px;
+}
