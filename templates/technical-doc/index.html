@@ -62,8 +62,8 @@
 
 
 		<div class="columns">
-			<div class="column is-one-fifth pt-8 pl-0 pr-0">
-				<aside class="pt-3 menu root-menu">
+			<div class="column is-one-fifth pt-8 pr-0 side-menu">
+				<aside class="pt-1 menu root-menu">
 
 					{% macro render_page(page,level) %}
 						{% if page.type=='page' or (page.type=='database' and page.title!='system') %}
@@ -110,7 +110,7 @@
 
 					{% for page in rootPage.pages %}
 					{% if page.pages.length>0 %}
-					<div class="pb-1">
+					<div class="">
 						{{ render_page(page,0) }}
 					</div>
 					{% endif %}

@@ -167,7 +167,7 @@ hr {
     font-size: 12px!important;
     font-weight: 600!important;
     color: #4f5a66;
-    padding-bottom: 5px;
+    padding-bottom: 2px;
 }
 
 .menu-group>.menu-group-title>.collapse{
@@ -296,3 +296,13 @@ hr {
     padding-bottom: 25px;
     padding-top: 7px;
 }
+
+.side-menu{
+    padding-left: 0px;
+}
+
+@media only screen and (max-width: 600px) {
+    .side-menu{
+        padding-left: 30px!important;
+    }
+  }
