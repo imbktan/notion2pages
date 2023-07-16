@@ -76,6 +76,21 @@ let convertNotionBlocksToHTML = async(blocks, notion, level = 0 )=>{
                 if(rt_caption!=null){
                     html+=`<div class='image-caption'>${rt_caption}</div>`;
                 }
+            }else if(block.type=='video'){
+                let url = '';
+                if(block[block.type].type=='external')
+                    url = block[block.type]['external']['url'];
+                else if(block[block.type].type=='file')
+                    url = block[block.type]['file']['url'];
+                
+                if(url.indexOf("youtube.com")>=0){
+                    html+=`
+                    <div class="youtube-video-container">
+                        <iframe width="560" height="315" src="${url}" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+                    </div>
+                    `;
+                }
+                
             }else if(block.type=='bulleted_list_item' || block.type=='numbered_list_item'){
                 let t = 'ul';
                 if(block.type=='numbered_list_item') t='ol';
