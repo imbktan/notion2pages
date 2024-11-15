@@ -334,6 +334,13 @@ const processPage = async (page, parent) => {
     await Promise.all(pagesToBeProcessed);
 }
 
+let removeHTMLExtension = (filename) =>{
+    if(filename.endsWith(".html"))
+        return filename.split('.').slice(0, -1).join('.');
+    else
+        return filename;
+}
+
 
 let pageKeywords = [];
 let rootPage = null;
@@ -364,7 +371,7 @@ const notion = new Client({
     let rendered_sitemap = nunjucks.render(Settings.templateSiteMap, { 
         pages: pages.map((e)=>{
             return {
-                url: Settings.sitemapBaseURL+"/"+ e,
+                url: removeHTMLExtension(Settings.sitemapBaseURL+"/"+ e),
                 last_modified: last_modified
             }
         })
