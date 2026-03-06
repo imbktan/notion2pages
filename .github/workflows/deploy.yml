@@ -8,7 +8,7 @@ on:
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
-    environment: production
+    environment: prod
 
     steps:
       - uses: actions/checkout@v4
@@ -29,28 +29,23 @@ jobs:
           FOOTER: ${{ vars.FOOTER }}
           LINKS: ${{ vars.LINKS }}
         run: |
-          node << 'NODESCRIPT'
-          const fs = require('fs');
-          const s = JSON.stringify;
-          const content = [
-            "exports.Settings = {",
-            `    "apiKey": ${s(process.env.APIKEY)},`,
-            '    "buildDirectory": "build",',
-            `    "pageID": ${s(process.env.PAGEID)},`,
-            '    "templateHTML": "./templates/technical-doc/index.html",',
-            '    "templateScript": "./templates/technical-doc/script.js",',
-            '    "templateSiteMap": "./templates/technical-doc/sitemap.xml",',
-            '    "ouputPageJSON": true,',
-            `    "iconURL": ${s(process.env.ICONURL)},`,
-            `    "websiteURL": ${s(process.env.WEBSITEURL)},`,
-            `    "sitemapBaseURL": ${s(process.env.SITEMAPBASEURL)},`,
-            '    "downloadImages": true,',
-            `    "footer": ${s(process.env.FOOTER)},`,
-            `    "links": ${process.env.LINKS},`,
-            "}",
-          ].join("\n");
-          fs.writeFileSync('./settings-prod.js', content);
-          NODESCRIPT
+          cat > settings-prod.js << SETTINGS_EOF
+          exports.Settings = {
+              "apiKey" : "${APIKEY}",
+              "buildDirectory": "build",
+              "pageID": "${PAGEID}",
+              "templateHTML": "./templates/technical-doc/index.html",
+              "templateScript": "./templates/technical-doc/script.js",
+              "templateSiteMap": "./templates/technical-doc/sitemap.xml",
+              "ouputPageJSON": true,
+              "iconURL": "${ICONURL}",
+              "websiteURL": "${WEBSITEURL}",
+              "sitemapBaseURL": "${SITEMAPBASEURL}",
+              "downloadImages": true,
+              "footer": '${FOOTER}',
+              "links": ${LINKS},
+          }
+          SETTINGS_EOF
 
       - name: Build
         run: |
