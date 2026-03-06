@@ -26,26 +26,37 @@ jobs:
           ICONURL: ${{ vars.ICONURL }}
           WEBSITEURL: ${{ vars.WEBSITEURL }}
           SITEMAPBASEURL: ${{ vars.SITEMAPBASEURL }}
-          FOOTER: ${{ vars.FOOTER }}
-          LINKS: ${{ vars.LINKS }}
         run: |
-          cat > settings-prod.js << SETTINGS_EOF
-          exports.Settings = {
-              "apiKey" : "${APIKEY}",
-              "buildDirectory": "build",
-              "pageID": "${PAGEID}",
-              "templateHTML": "./templates/technical-doc/index.html",
-              "templateScript": "./templates/technical-doc/script.js",
-              "templateSiteMap": "./templates/technical-doc/sitemap.xml",
-              "ouputPageJSON": true,
-              "iconURL": "${ICONURL}",
-              "websiteURL": "${WEBSITEURL}",
-              "sitemapBaseURL": "${SITEMAPBASEURL}",
-              "downloadImages": true,
-              "footer": '${FOOTER}',
-              "links": ${LINKS},
-          }
-          SETTINGS_EOF
+          cat > /tmp/_footer << 'FOOTER_DELIM'
+          ${{ vars.FOOTER }}
+          FOOTER_DELIM
+          cat > /tmp/_links << 'LINKS_DELIM'
+          ${{ vars.LINKS }}
+          LINKS_DELIM
+          node << 'NODESCRIPT'
+          const fs = require("fs");
+          const footer = fs.readFileSync("/tmp/_footer", "utf8").trim();
+          const links = fs.readFileSync("/tmp/_links", "utf8").trim();
+          const s = JSON.stringify;
+          const content = [
+            "exports.Settings = {",
+            `    "apiKey": ${s(process.env.APIKEY)},`,
+            '    "buildDirectory": "build",',
+            `    "pageID": ${s(process.env.PAGEID)},`,
+            '    "templateHTML": "./templates/technical-doc/index.html",',
+            '    "templateScript": "./templates/technical-doc/script.js",',
+            '    "templateSiteMap": "./templates/technical-doc/sitemap.xml",',
+            '    "ouputPageJSON": true,',
+            `    "iconURL": ${s(process.env.ICONURL)},`,
+            `    "websiteURL": ${s(process.env.WEBSITEURL)},`,
+            `    "sitemapBaseURL": ${s(process.env.SITEMAPBASEURL)},`,
+            '    "downloadImages": true,',
+            `    "footer": ${s(footer)},`,
+            `    "links": ${links},`,
+            "}",
+          ].join("\n");
+          fs.writeFileSync("./settings-prod.js", content);
+          NODESCRIPT
 
       - name: Build
         run: |
