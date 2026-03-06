@@ -26,17 +26,11 @@ jobs:
           ICONURL: ${{ vars.ICONURL }}
           WEBSITEURL: ${{ vars.WEBSITEURL }}
           SITEMAPBASEURL: ${{ vars.SITEMAPBASEURL }}
+          FOOTER: ${{ vars.FOOTER }}
+          LINKS: ${{ vars.LINKS }}
         run: |
-          cat > /tmp/_footer << 'FOOTER_DELIM'
-          ${{ vars.FOOTER }}
-          FOOTER_DELIM
-          cat > /tmp/_links << 'LINKS_DELIM'
-          ${{ vars.LINKS }}
-          LINKS_DELIM
           node << 'NODESCRIPT'
-          const fs = require("fs");
-          const footer = fs.readFileSync("/tmp/_footer", "utf8").trim();
-          const links = fs.readFileSync("/tmp/_links", "utf8").trim();
+          const fs = require('fs');
           const s = JSON.stringify;
           const content = [
             "exports.Settings = {",
@@ -51,11 +45,11 @@ jobs:
             `    "websiteURL": ${s(process.env.WEBSITEURL)},`,
             `    "sitemapBaseURL": ${s(process.env.SITEMAPBASEURL)},`,
             '    "downloadImages": true,',
-            `    "footer": ${s(footer)},`,
-            `    "links": ${links},`,
+            `    "footer": ${s(process.env.FOOTER)},`,
+            `    "links": ${process.env.LINKS},`,
             "}",
           ].join("\n");
-          fs.writeFileSync("./settings-prod.js", content);
+          fs.writeFileSync('./settings-prod.js', content);
           NODESCRIPT
 
       - name: Build
