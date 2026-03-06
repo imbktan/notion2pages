@@ -1,0 +1,28 @@
+name: Deploy Test Page to Cloudflare Pages
+
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy-test:
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      - name: Create hello world page
+        run: |
+          mkdir -p dist
+          cat > dist/index.html << 'EOF'
+          <!DOCTYPE html>
+          <html>
+          <head><title>Hello World</title></head>
+          <body><h1>Hello World</h1><p>Cloudflare Pages deployment works!</p></body>
+          </html>
+          EOF
+
+      - name: Deploy to Cloudflare Pages
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy dist --project-name=${{ vars.CLOUDFLARE_PROJECT_NAME }}
