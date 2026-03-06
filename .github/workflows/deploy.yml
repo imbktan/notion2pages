@@ -1,0 +1,61 @@
+name: Build and Deploy to Cloudflare Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+
+      - run: npm install
+
+      - name: Generate settings-prod.js
+        env:
+          APIKEY: ${{ secrets.APIKEY }}
+          PAGEID: ${{ vars.PAGEID }}
+          ICONURL: ${{ vars.ICONURL }}
+          WEBSITEURL: ${{ vars.WEBSITEURL }}
+          SITEMAPBASEURL: ${{ vars.SITEMAPBASEURL }}
+          FOOTER: ${{ vars.FOOTER }}
+          LINKS: ${{ vars.LINKS }}
+        run: |
+          cat > settings-prod.js << SETTINGS_EOF
+          exports.Settings = {
+              "apiKey" : "${APIKEY}",
+              "buildDirectory": "build",
+              "pageID": "${PAGEID}",
+              "templateHTML": "./templates/technical-doc/index.html",
+              "templateScript": "./templates/technical-doc/script.js",
+              "templateSiteMap": "./templates/technical-doc/sitemap.xml",
+              "ouputPageJSON": true,
+              "iconURL": "${ICONURL}",
+              "websiteURL": "${WEBSITEURL}",
+              "sitemapBaseURL": "${SITEMAPBASEURL}",
+              "downloadImages": true,
+              "footer": '${FOOTER}',
+              "links": ${LINKS},
+          }
+          SETTINGS_EOF
+
+      - name: Build
+        run: |
+          mkdir -p build/images
+          cp -r templates/technical-doc/* build/
+          node notion2pages.js ./settings-prod.js
+
+      - name: Deploy to Cloudflare Pages
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy build --project-name=${{ vars.CLOUDFLARE_PROJECT_NAME }}
